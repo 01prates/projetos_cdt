@@ -24,152 +24,36 @@ class StarkIAApp(ctk.CTk):
         self.title("STARK IA")
         self.geometry("450x650+920+40")
         self.minsize(380, 500)
-        self.configure(fg_color="#0F172A")
+        self.configure(fg_color="#090D16")  # Fundo geral ainda mais escuro
+
+        # Configuração do ícone personalizado da aplicação
+        try:
+            self.iconbitmap("stark_logo.ico")
+        except Exception:
+            pass
 
         self.attributes("-topmost", True)
 
         self.navegador = None
         self.ultimo_cargo = ""
-        self.menu_lateral_aberto = False
         
         self.historico_conversas = []
         self.conversa_atual = []
 
         # ==================== LAYOUT PRINCIPAL (GRID) ====================
-        self.grid_columnconfigure(0, weight=0)  # Menu Lateral
-        self.grid_columnconfigure(1, weight=1)  # Painel do Chat
+        self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # ==================== PAINEL LATERAL (HISTÓRICO E COMANDOS) ====================
-        self.sidebar_frame = ctk.CTkFrame(
-            self, fg_color="#1E293B", corner_radius=0, width=320
-        )
-        self.sidebar_frame.grid_propagate(False)
-
-        self.btn_nova_conversa = ctk.CTkButton(
-            self.sidebar_frame,
-            text="➕ Nova Conversa",
-            fg_color="#2563EB",
-            text_color="#FFFFFF",
-            hover_color="#1D4ED8",
-            corner_radius=8,
-            height=38,
-            font=("Segoe UI", 12, "bold"),
-            command=self.criar_nova_conversa,
-        )
-        self.btn_nova_conversa.pack(pady=15, padx=15, fill="x")
-
-        self.sidebar_scroll = ctk.CTkScrollableFrame(
-            self.sidebar_frame,
-            fg_color="#0F172A",
-            corner_radius=12,
-            border_color="#334155",
-            border_width=1,
-        )
-        self.sidebar_scroll.pack(pady=(0, 15), padx=12, fill="both", expand=True)
-
-        self.lbl_hist_titulo = ctk.CTkLabel(
-            self.sidebar_scroll,
-            text="🕒 Histórico de Conversas",
-            text_color="#94A3B8",
-            font=("Segoe UI", 12, "bold"),
-        )
-        self.lbl_hist_titulo.pack(pady=(10, 5), padx=5, anchor="w")
-
-        self.frame_historico_lista = ctk.CTkFrame(self.sidebar_scroll, fg_color="transparent")
-        self.frame_historico_lista.pack(fill="x", padx=0, pady=(0, 10))
-
-        self.lbl_cmd_princ = ctk.CTkLabel(
-            self.sidebar_scroll,
-            text="⚡ Comandos Principais",
-            text_color="#F8FAFC",
-            font=("Segoe UI", 13, "bold"),
-        )
-        self.lbl_cmd_princ.pack(pady=(10, 5), padx=5, anchor="w")
-
-        comandos_principais = [
-            ("🔍 Vaga em São Paulo", "Quero procurar vaga de emprego em São Paulo"),
-            ("💼 Estágio no Rio de Janeiro", "Quero procurar estágio em tecnologia no Rio de Janeiro"),
-            ("🚀 Vaga Remota", "Quero procurar vaga remota"),
-            ("🏢 Vaga em Curitiba", "Quero procurar vaga em grande empresa em Curitiba"),
-            ("🎯 Vaga em Belo Horizonte", "Quero procurar vaga para júnior em Belo Horizonte"),
-        ]
-
-        for texto_btn, acao_texto in comandos_principais:
-            btn_cmd = ctk.CTkButton(
-                self.sidebar_scroll,
-                text=texto_btn,
-                fg_color="#2563EB",
-                text_color="#FFFFFF",
-                hover_color="#1D4ED8",
-                anchor="w",
-                corner_radius=8,
-                height=36,
-                font=("Segoe UI", 11, "bold"),
-                command=lambda a=acao_texto: self.executar_comando_direto(a),
-            )
-            btn_cmd.pack(fill="x", pady=4, padx=4)
-
-        self.lbl_cmd_gen = ctk.CTkLabel(
-            self.sidebar_scroll,
-            text="💡 Orientações e Dicas",
-            text_color="#94A3B8",
-            font=("Segoe UI", 13, "bold"),
-        )
-        self.lbl_cmd_gen.pack(pady=(15, 5), padx=5, anchor="w")
-
-        comandos_genericos = [
-            ("📝 Dicas para Entrevista", "Me dê dicas valiosas para ir bem em uma entrevista de emprego."),
-            ("📄 Avaliar Perfil no Currículo", "Como posso destacar minhas habilidades no currículo para chamar atenção?"),
-            ("🔄 Transição de Carreira Segura", "Como posso me planejar para fazer uma transição de carreira segura?"),
-            ("📈 Habilidades em Alta no Mercado", "Quais são as competências profissionais mais exigidas pelo mercado atualmente?"),
-        ]
-
-        for texto_btn, acao_texto in comandos_genericos:
-            btn_cmd = ctk.CTkButton(
-                self.sidebar_scroll,
-                text=texto_btn,
-                fg_color="#334155",
-                text_color="#F8FAFC",
-                hover_color="#475569",
-                anchor="w",
-                corner_radius=8,
-                height=36,
-                font=("Segoe UI", 11),
-                command=lambda a=acao_texto: self.executar_comando_direto(a),
-            )
-            btn_cmd.pack(fill="x", pady=4, padx=4)
-
         # ==================== PAINEL PRINCIPAL: CHAT ====================
-        self.main_chat_frame = ctk.CTkFrame(self, fg_color="#0F172A", corner_radius=0)
-        self.main_chat_frame.grid(row=0, column=1, sticky="nsew")
+        self.main_chat_frame = ctk.CTkFrame(self, fg_color="#090D16", corner_radius=0)
+        self.main_chat_frame.grid(row=0, column=0, sticky="nsew")
 
+        # Cabeçalho com título centralizado e tom escuro
         self.header_frame = ctk.CTkFrame(
-            self.main_chat_frame, fg_color="#1E293B", height=65, corner_radius=0
+            self.main_chat_frame, fg_color="#0D1322", height=65, corner_radius=0
         )
         self.header_frame.pack(fill="x", side="top")
-
-        self.btn_menu = ctk.CTkButton(
-            self.header_frame,
-            text="≡",
-            width=40,
-            height=35,
-            fg_color="#334155",
-            text_color="#F8FAFC",
-            hover_color="#475569",
-            corner_radius=6,
-            font=("Segoe UI", 18, "bold"),
-            command=self.alternar_menu,
-        )
-        self.btn_menu.pack(side="left", padx=15, pady=15)
-
-        self.header_label = ctk.CTkLabel(
-            self.header_frame,
-            text="STARK IA",
-            text_color="#F8FAFC",
-            font=("Segoe UI", 16, "bold"),
-        )
-        self.header_label.pack(side="left", padx=5, pady=15)
+        self.header_frame.pack_propagate(False)
 
         self.status_label = ctk.CTkLabel(
             self.header_frame,
@@ -179,11 +63,20 @@ class StarkIAApp(ctk.CTk):
         )
         self.status_label.pack(side="right", padx=15, pady=15)
 
+        self.header_label = ctk.CTkLabel(
+            self.header_frame,
+            text="STARK IA",
+            text_color="#F8FAFC",
+            font=("Segoe UI", 16, "bold"),
+        )
+        self.header_label.pack(side="top", pady=18)
+
+        # Área de mensagens com tom escuro profundo
         self.chat_scroll = ctk.CTkScrollableFrame(
             self.main_chat_frame,
-            fg_color="#1E293B",
+            fg_color="#0D1322",
             corner_radius=16,
-            border_color="#334155",
+            border_color="#1E293B",
             border_width=1,
         )
         self.chat_scroll.pack(pady=15, padx=15, fill="both", expand=True)
@@ -196,10 +89,10 @@ class StarkIAApp(ctk.CTk):
         self.entry_msg = ctk.CTkEntry(
             self.input_frame,
             placeholder_text="Digite cargo e região (ex: Químico em São Paulo)...",
-            placeholder_text_color="#94A3B8",
-            fg_color="#1E293B",
+            placeholder_text_color="#64748B",
+            fg_color="#0D1322",
             text_color="#F8FAFC",
-            border_color="#334155",
+            border_color="#1E293B",
             border_width=1.5,
             height=44,
             corner_radius=22,
@@ -228,75 +121,17 @@ class StarkIAApp(ctk.CTk):
             is_user=False,
         )
 
-    def alternar_menu(self):
-        if self.menu_lateral_aberto:
-            self.sidebar_frame.grid_forget()
-            self.menu_lateral_aberto = False
-        else:
-            self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
-            self.menu_lateral_aberto = True
-
-    def criar_nova_conversa(self):
-        if self.conversa_atual:
-            titulo_resumo = self.conversa_atual[0][:22] + "..." if len(self.conversa_atual[0]) > 22 else self.conversa_atual[0]
-            self.historico_conversas.append((titulo_resumo, list(self.conversa_atual)))
-            self.atualizar_painel_historico()
-
-        for widget in self.chat_scroll.winfo_children():
-            widget.destroy()
-
-        self.conversa_atual = []
-        self.ultimo_cargo = ""
-        self.adicionar_balao_mensagem("Nova conversa iniciada! Como posso ajudar você agora?", is_user=False)
-        self.alternar_menu()
-
-    def atualizar_painel_historico(self):
-        for widget in self.frame_historico_lista.winfo_children():
-            widget.destroy()
-
-        for idx, (titulo, mensagens) in enumerate(reversed(self.historico_conversas)):
-            btn_hist = ctk.CTkButton(
-                self.frame_historico_lista,
-                text=f"💬 {titulo}",
-                fg_color="#334155",
-                text_color="#CBD5E1",
-                hover_color="#475569",
-                anchor="w",
-                corner_radius=6,
-                height=30,
-                font=("Segoe UI", 10),
-                command=lambda m=mensagens: self.carregar_conversa_historico(m),
-            )
-            btn_hist.pack(fill="x", pady=2, padx=2)
-
-    def carregar_conversa_historico(self, mensagens):
-        for widget in self.chat_scroll.winfo_children():
-            widget.destroy()
-
-        self.conversa_atual = list(mensagens)
-        for i, texto in enumerate(self.conversa_atual):
-            is_u = (i % 2 == 0)
-            self.adicionar_balao_mensagem_direta(texto, is_user=is_u)
-        
-        self.alternar_menu()
-
-    def executar_comando_direto(self, acao):
-        self.entry_msg.delete(0, "end")
-        self.entry_msg.insert(0, acao)
-        self.alternar_menu()
-        self.enviar_mensagem()
-
     def adicionar_balao_mensagem_direta(self, texto, is_user=False):
         msg_container = ctk.CTkFrame(self.chat_scroll, fg_color="transparent")
         msg_container.pack(fill="x", pady=6, padx=5)
 
         if is_user:
-            balao = ctk.CTkFrame(msg_container, fg_color="#2563EB", corner_radius=16)
+            balao = ctk.CTkFrame(msg_container, fg_color="#1D4ED8", corner_radius=16)
             balao.pack(side="right", anchor="e", padx=(45, 0))
             lbl_texto = ctk.CTkLabel(balao, text=texto, font=("Segoe UI", 12), text_color="#FFFFFF", wraplength=250, justify="left")
             lbl_texto.pack(anchor="e", padx=14, pady=10)
         else:
-            balao = ctk.CTkFrame(msg_container, fg_color="#334155", corner_radius=16)
+            balao = ctk.CTkFrame(msg_container, fg_color="#161F33", corner_radius=16)
             balao.pack(side="left", anchor="w", padx=(0, 45))
             lbl_nome = ctk.CTkLabel(balao, text="STARK IA", font=("Segoe UI", 10, "bold"), text_color="#10B981")
             lbl_nome.pack(anchor="w", padx=14, pady=(8, 0))
@@ -313,22 +148,22 @@ class StarkIAApp(ctk.CTk):
         container = ctk.CTkFrame(self.chat_scroll, fg_color="transparent")
         container.pack(fill="x", pady=6, padx=5)
 
-        balao = ctk.CTkFrame(container, fg_color="#334155", corner_radius=16)
+        balao = ctk.CTkFrame(container, fg_color="#161F33", corner_radius=16)
         balao.pack(side="left", anchor="w", padx=(0, 45))
 
         lbl_nome = ctk.CTkLabel(
             balao,
             text="STARK IA",
             font=("Segoe UI", 10, "bold"),
-            text_color="#94A3B8",
+            text_color="#64748B",
         )
         lbl_nome.pack(anchor="w", padx=14, pady=(8, 0))
 
         lbl_texto = ctk.CTkLabel(
             balao,
-            text="✨ Buscando as melhores oportunidades...",
+            text="Buscando as melhores oportunidades...",
             font=("Segoe UI", 12, "italic"),
-            text_color="#CBD5E1",
+            text_color="#94A3B8",
         )
         lbl_texto.pack(anchor="w", padx=14, pady=(2, 10))
 
@@ -385,29 +220,53 @@ class StarkIAApp(ctk.CTk):
             self.adicionar_balao_mensagem(resp, is_user=False)
             return
 
-        gatilhos_busca = ["procura", "procurar", "busca", "buscar", "vaga", "vagas", "emprego", "quero", "preciso", "estágio", "estagio", "ser"]
+        gatilhos_busca = ["procura", "procurar", "busca", "buscar", "vaga", "vagas", "emprego", "quero", "preciso", "estágio", "estagio", "ser", "trabalhar", "trampar"]
         tem_intencao_busca = any(g in msg_lower for g in gatilhos_busca)
 
-        if not tem_intencao_busca and not self.ultimo_cargo:
+        if not tem_intencao_busca and not self.ultimo_cargo and len(msg_lower.split()) < 2:
             resp = "Com certeza! Pode me dizer qual cargo e região você gostaria de pesquisar."
             self.adicionar_balao_mensagem(resp, is_user=False)
             return
 
-        locais_conhecidos = [
-            "sao paulo", "são paulo", "sp", "rio de janeiro", "rj", "belo horizonte", "mg",
-            "curitiba", "pr", "porto alegre", "rs", "salvador", "ba", "recife", "pe",
-            "fortaleza", "ce", "manaus", "am", "brasilia", "brasília", "df", "goiania", "goiânia", "go",
-            "florianopolis", "florianópolis", "sc", "vitoria", "vitória", "es", "cuiaba", "cuiabá", "mt",
-            "campo grande", "ms", "belem", "belém", "pa", "santos", "campinas", "osasco", "sao bernardo", 
-            "são bernardo", "santo andre", "santo andré", "niteroi", "niteroí", "zona sul", "zona leste", "zona norte", "zona oeste"
-        ]
+        # ==================== DICIONÁRIO COMPLETO DE ESTADOS E CAPITAIS ====================
+        mapeamento_regioes = {
+            "sao paulo": "sao-paulo-sp", "são paulo": "sao-paulo-sp", "sp": "sao-paulo-sp",
+            "rio de janeiro": "rio-de-janeiro-rj", "rj": "rio-de-janeiro-rj",
+            "belo horizonte": "belo-horizonte-mg", "minas gerais": "belo-horizonte-mg", "mg": "belo-horizonte-mg",
+            "vitoria": "vitoria-es", "vitória": "vitoria-es", "espirito santo": "vitoria-es", "espírito santo": "vitoria-es", "es": "vitoria-es",
+            "curitiba": "curitiba-pr", "parana": "curitiba-pr", "paraná": "curitiba-pr", "pr": "curitiba-pr",
+            "florianopolis": "florianopolis-sc", "florianópolis": "florianopolis-sc", "santa catarina": "florianopolis-sc", "sc": "florianopolis-sc",
+            "porto alegre": "porto-alegre-rs", "rio grande do sul": "porto-alegre-rs", "rs": "porto-alegre-rs",
+            "salvador": "salvador-ba", "bahia": "salvador-ba", "ba": "salvador-ba",
+            "recife": "recife-pe", "pernambuco": "recife-pe", "pe": "recife-pe",
+            "fortaleza": "fortaleza-ce", "ceara": "fortaleza-ce", "ceará": "fortaleza-ce", "ce": "fortaleza-ce",
+            "sao luis": "sao-luis-ma", "são luís": "sao-luis-ma", "maranhao": "sao-luis-ma", "maranhão": "sao-luis-ma", "ma": "sao-luis-ma",
+            "natal": "natal-rn", "rio grande do norte": "natal-rn", "rn": "natal-rn",
+            "joao pessoa": "joao-pessoa-pb", "joão pessoa": "joao-pessoa-pb", "paraiba": "joao-pessoa-pb", "paraíba": "joao-pessoa-pb", "pb": "joao-pessoa-pb",
+            "maceio": "maceio-al", "maceió": "maceio-al", "alagoas": "maceio-al", "al": "maceio-al",
+            "aracaju": "aracaju-se", "sergipe": "aracaju-se", "se": "aracaju-se",
+            "teresina": "teresina-pi", "piaui": "teresina-pi", "piauí": "teresina-pi", "pi": "teresina-pi",
+            "manaus": "manaus-am", "amazonas": "manaus-am", "am": "manaus-am",
+            "belem": "belem-pa", "belém": "belem-pa", "para": "belem-pa", "pará": "belem-pa", "pa": "belem-pa",
+            "porto velho": "porto-velho-ro", "rondonia": "porto-velho-ro", "rondônia": "porto-velho-ro", "ro": "porto-velho-ro",
+            "rio branco": "rio-branco-ac", "acre": "rio-branco-ac", "ac": "rio-branco-ac",
+            "macapa": "macapa-ap", "macapá": "macapa-ap", "amapa": "macapa-ap", "amapá": "macapa-ap", "ap": "macapa-ap",
+            "boa vista": "boa-vista-rr", "roraima": "boa-vista-rr", "rr": "boa-vista-rr",
+            "palmas": "palmas-to", "tocantins": "palmas-to", "to": "palmas-to",
+            "brasilia": "brasilia-df", "brasília": "brasilia-df", "df": "brasilia-df", "distrito federal": "brasilia-df",
+            "goiania": "goiania-go", "goiânia": "goiania-go", "goias": "goiania-go", "goiás": "goiania-go", "go": "goiania-go",
+            "cuiaba": "cuiaba-mt", "cuiabá": "cuiaba-mt", "mato grosso": "cuiaba-mt", "mt": "cuiaba-mt",
+            "campo grande": "campo-grande-ms", "mato grosso do sul": "campo-grande-ms", "ms": "campo-grande-ms",
+            "campinas": "campinas-sp", "santos": "santos-sp", "osasco": "osasco-sp",
+            "niteroi": "niteroi-rj", "niteroí": "niteroi-rj", "londrina": "londrina-pr"
+        }
 
         regiao_encontrada = None
-        for regiao in sorted(locais_conhecidos, key=len, reverse=True):
+        for regiao in sorted(mapeamento_regioes.keys(), key=len, reverse=True):
             padrao = r'(?:\b(?:em|no|na)\s+)?\b(' + re.escape(regiao) + r')\b'
             match = re.search(padrao, msg_lower)
             if match:
-                regiao_encontrada = match.group(1).title()
+                regiao_encontrada = regiao
                 msg_lower = msg_lower.replace(match.group(0), "")
                 break
 
@@ -419,9 +278,10 @@ class StarkIAApp(ctk.CTk):
             "valeu", "vlw", "agora", "quero", "querendo", "queria", "virar", "arrumar", "arranja",
             "busco", "buscar", "procurar", "procura", "pesquisar", "pesquisa", "achar", "encontrar",
             "preciso", "ver", "mostra", "mostre", "tem", "consigo", "vaga", "vagas", "emprego",
-            "empregos", "oportunidade", "oportunidades", "trampo", "para", "em", "no", "na", "nos",
-            "nas", "por", "hoje", "favor", "pfv", "porfavor", "ser",
-            "um", "uma", "uns", "umas", "me", "mim", "pra", "pro", "ter", "como", "entao", "então", "estagio", "estágio", "grande", "empresa", "junior", "júnior"
+            "empregos", "oportunidade", "oportunidades", "trampo", "trabalhar", "trabalho", "trampar",
+            "para", "em", "no", "na", "nos", "nas", "por", "hoje", "favor", "pfv", "porfavor",
+            "um", "uma", "uns", "umas", "me", "mim", "pra", "pro", "ter", "como", "entao", "então", 
+            "estagio", "estágio", "grande", "empresa", "junior", "júnior", "ser", "como",
         }
 
         cargos_curtos_validos = {"ti", "rh", "ui", "ux", "pr", "sem"}
@@ -447,9 +307,9 @@ class StarkIAApp(ctk.CTk):
             return
 
         balao_loading = self.criar_balao_carregamento()
-        self.executar_busca_na_pagina(cargo_final, regiao_encontrada, balao_loading)
+        self.executar_busca_na_pagina(cargo_final, regiao_encontrada, mapeamento_regioes, balao_loading)
 
-    def executar_busca_na_pagina(self, cargo, regiao, balao_loading):
+    def executar_busca_na_pagina(self, cargo, regiao_chave, mapeamento_regioes, balao_loading):
         try:
             if not self.navegador:
                 opcoes = webdriver.ChromeOptions()
@@ -459,86 +319,51 @@ class StarkIAApp(ctk.CTk):
                 self.navegador = webdriver.Chrome(service=servico, options=opcoes)
                 self.navegador.set_window_rect(x=50, y=50, width=950, height=950)
 
-            # Abre o site da Catho
-            self.navegador.get("https://www.catho.com.br/")
-            self.aceitar_cookies()
-            time.sleep(1.5)
+            cargo_url = cargo.lower().strip()
+            cargo_url = (cargo_url.replace("á", "a").replace("à", "a").replace("ã", "a").replace("â", "a")
+                                  .replace("é", "e").replace("ê", "e").replace("í", "i")
+                                  .replace("ó", "o").replace("ô", "o").replace("õ", "o")
+                                  .replace("ú", "u").replace("ç", "c"))
+            cargo_url = re.sub(r'[^a-z0-9\s]', '', cargo_url)
+            cargo_url = cargo_url.replace(" ", "-")
 
-            # Preenche o cargo
-            try:
-                input_cargo = WebDriverWait(self.navegador, 10).until(
-                    EC.element_to_be_clickable((By.CSS_SELECTOR, "input[name*='q'], input#searchId, input[placeholder*='Cargo']"))
-                )
-                input_cargo.click()
-                input_cargo.clear()
-                for letra in cargo:
-                    input_cargo.send_keys(letra)
-                    time.sleep(0.03)
-            except Exception:
+            if regiao_chave:
+                regiao_url = mapeamento_regioes.get(regiao_chave)
+                url_busca = f"https://www.catho.com.br/vagas/{cargo_url}/{regiao_url}/"
+                self.navegador.get(url_busca)
+                time.sleep(2.0)
+            else:
+                self.navegador.get("https://www.catho.com.br/")
+                self.aceitar_cookies()
+                time.sleep(1.5)
+
                 script_cargo = f"""
                     let inputCargo = document.querySelector("input[name*='q']") || document.querySelector("input#searchId") || document.querySelector("input[placeholder*='Cargo']");
                     if (inputCargo) {{
+                        inputCargo.focus();
+                        inputCargo.value = "";
                         inputCargo.value = "{cargo}";
                         inputCargo.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        inputCargo.dispatchEvent(new Event('change', {{ bubbles: true }}));
                     }}
                 """
                 self.navegador.execute_script(script_cargo)
+                time.sleep(0.8)
 
-            time.sleep(0.8)
-
-            # Preenche a região e clica na sugestão da lista suspensa
-            if regiao:
-                try:
-                    input_local = WebDriverWait(self.navegador, 10).until(
-                        EC.element_to_be_clickable((By.CSS_SELECTOR, "input[name*='onde'], input#whereId, input[placeholder*='Localização']"))
-                    )
-                    input_local.click()
-                    input_local.clear()
-                    for letra in regiao:
-                        input_local.send_keys(letra)
-                        time.sleep(0.03)
-                    
-                    time.sleep(1.5)  # Aguarda a lista suspensa aparecer
-
-                    # Clica na opção correta dentro da lista
-                    sugestoes = self.navegador.find_elements(By.CSS_SELECTOR, "ul li, div[role='option'], .suggestion-item, .item-suggestion")
-                    clicado = False
-                    for sug in sugestoes:
-                        if regiao.lower() in sug.text.lower():
-                            sug.click()
-                            clicado = True
-                            break
-                    if not clicado and sugestoes:
-                        sugestoes[0].click()
-                except Exception:
-                    pass
-
-            time.sleep(1.0)
-
-            # >>> DISPARA A PESQUISA FORÇANDO VIA JAVASCRIPT O CLIQUE NO BOTÃO DE BUSCA DA PÁGINA <<<
-            self.navegador.execute_script("""
-                let botoes = document.querySelectorAll("button");
-                for (let btn of botoes) {
-                    let texto = btn.innerText.toLowerCase();
-                    let aria = (btn.getAttribute('aria-label') || '').toLowerCase();
-                    if (texto.includes("buscar") || texto.includes("vagas") || texto.includes("pesquisar") || aria.includes("buscar") || aria.includes("pesquisar")) {
-                        btn.click();
-                        return;
+                self.navegador.execute_script("""
+                    let form = document.querySelector("form");
+                    if (form) {
+                        let submitBtn = form.querySelector("button[type='submit']") || form.querySelector("button");
+                        if (submitBtn) { submitBtn.click(); }
                     }
-                }
-                let form = document.querySelector("form");
-                if (form) {
-                    let submitBtn = form.querySelector("button[type='submit']");
-                    if (submitBtn) { submitBtn.click(); return; }
-                }
-            """)
+                """)
+                time.sleep(2.5)
 
-            time.sleep(2.5)
             self.aceitar_cookies()
             balao_loading.destroy()
 
-            if regiao:
-                self.adicionar_balao_mensagem(f"Prontinho! Pesquisei as vagas de '{cargo.title()}' em {regiao} e já exibi os resultados para você.", is_user=False)
+            if regiao_chave:
+                self.adicionar_balao_mensagem(f"Prontinho! Pesquisei as vagas de '{cargo.title()}' em {regiao_chave.title()} e já exibi os resultados filtrados.", is_user=False)
             else:
                 self.adicionar_balao_mensagem(f"Prontinho! Encontrei ótimas vagas para '{cargo.title()}' e já deixei a busca aberta na sua tela.", is_user=False)
 
