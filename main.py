@@ -1,16 +1,10 @@
-import datetime
 import re
 import threading
 import time
+import traceback
 import urllib.parse
 import customtkinter as ctk
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
@@ -24,9 +18,8 @@ class StarkIAApp(ctk.CTk):
         self.title("STARK IA")
         self.geometry("450x650+920+40")
         self.minsize(380, 500)
-        self.configure(fg_color="#090D16")  # Fundo geral ainda mais escuro
+        self.configure(fg_color="#090D16")
 
-        # Configuração do ícone personalizado da aplicação
         try:
             self.iconbitmap("stark_logo.ico")
         except Exception:
@@ -36,9 +29,12 @@ class StarkIAApp(ctk.CTk):
 
         self.navegador = None
         self.ultimo_cargo = ""
-        
+
         self.historico_conversas = []
         self.conversa_atual = []
+
+        # Fecha o Chrome junto com o app (evita chromedriver "fantasma" aberto)
+        self.protocol("WM_DELETE_WINDOW", self.fechar_app)
 
         # ==================== LAYOUT PRINCIPAL (GRID) ====================
         self.grid_columnconfigure(0, weight=1)
@@ -48,7 +44,6 @@ class StarkIAApp(ctk.CTk):
         self.main_chat_frame = ctk.CTkFrame(self, fg_color="#090D16", corner_radius=0)
         self.main_chat_frame.grid(row=0, column=0, sticky="nsew")
 
-        # Cabeçalho com título centralizado e tom escuro
         self.header_frame = ctk.CTkFrame(
             self.main_chat_frame, fg_color="#0D1322", height=65, corner_radius=0
         )
@@ -71,7 +66,6 @@ class StarkIAApp(ctk.CTk):
         )
         self.header_label.pack(side="top", pady=18)
 
-        # Área de mensagens com tom escuro profundo
         self.chat_scroll = ctk.CTkScrollableFrame(
             self.main_chat_frame,
             fg_color="#0D1322",
@@ -280,8 +274,8 @@ class StarkIAApp(ctk.CTk):
             "preciso", "ver", "mostra", "mostre", "tem", "consigo", "vaga", "vagas", "emprego",
             "empregos", "oportunidade", "oportunidades", "trampo", "trabalhar", "trabalho", "trampar",
             "para", "em", "no", "na", "nos", "nas", "por", "hoje", "favor", "pfv", "porfavor",
-            "um", "uma", "uns", "umas", "me", "mim", "pra", "pro", "ter", "como", "entao", "então", 
-            "estagio", "estágio", "grande", "empresa", "junior", "júnior", "ser", "como",
+            "um", "uma", "uns", "umas", "me", "mim", "pra", "pro", "ter", "como", "entao", "então",
+            "estagio", "estágio", "grande", "empresa", "junior", "júnior",
         }
 
         cargos_curtos_validos = {"ti", "rh", "ui", "ux", "pr", "sem"}
@@ -309,15 +303,50 @@ class StarkIAApp(ctk.CTk):
         balao_loading = self.criar_balao_carregamento()
         self.executar_busca_na_pagina(cargo_final, regiao_encontrada, mapeamento_regioes, balao_loading)
 
+    # ==================== CHROME ====================
+    def navegador_esta_vivo(self):
+        """Confere se o Chrome ainda está aberto (o usuário pode ter fechado a janela)."""
+        if not self.navegador:
+            return False
+        try:
+            return len(self.navegador.window_handles) > 0
+        except Exception:
+            return False
+
+    def fechar_navegador(self):
+        if self.navegador:
+            try:
+                self.navegador.quit()
+            except Exception:
+                pass
+        self.navegador = None
+
+    def obter_navegador(self):
+        """Reaproveita o Chrome aberto ou abre um novo se ele foi fechado/travou."""
+        if self.navegador_esta_vivo():
+            return self.navegador
+
+        self.fechar_navegador()
+
+        opcoes = webdriver.ChromeOptions()
+        opcoes.add_argument("--disable-blink-features=AutomationControlled")
+        opcoes.add_argument("--no-first-run")
+        opcoes.add_argument("--no-default-browser-check")
+        opcoes.add_experimental_option("excludeSwitches", ["enable-automation"])
+
+        # Selenium 4.6+ baixa e escolhe o chromedriver certo sozinho
+        # (não usa mais o webdriver_manager, que falha quando o Chrome atualiza).
+        self.navegador = webdriver.Chrome(options=opcoes)
+        self.navegador.set_window_rect(x=50, y=50, width=950, height=950)
+        return self.navegador
+
+    def fechar_app(self):
+        self.fechar_navegador()
+        self.destroy()
+
     def executar_busca_na_pagina(self, cargo, regiao_chave, mapeamento_regioes, balao_loading):
         try:
-            if not self.navegador:
-                opcoes = webdriver.ChromeOptions()
-                opcoes.add_argument("--disable-blink-features=AutomationControlled")
-                opcoes.add_experimental_option("excludeSwitches", ["enable-automation"])
-                servico = Service(ChromeDriverManager().install())
-                self.navegador = webdriver.Chrome(service=servico, options=opcoes)
-                self.navegador.set_window_rect(x=50, y=50, width=950, height=950)
+            navegador = self.obter_navegador()
 
             cargo_url = cargo.lower().strip()
             cargo_url = (cargo_url.replace("á", "a").replace("à", "a").replace("ã", "a").replace("â", "a")
@@ -330,10 +359,10 @@ class StarkIAApp(ctk.CTk):
             if regiao_chave:
                 regiao_url = mapeamento_regioes.get(regiao_chave)
                 url_busca = f"https://www.catho.com.br/vagas/{cargo_url}/{regiao_url}/"
-                self.navegador.get(url_busca)
+                navegador.get(url_busca)
                 time.sleep(2.0)
             else:
-                self.navegador.get("https://www.catho.com.br/")
+                navegador.get("https://www.catho.com.br/")
                 self.aceitar_cookies()
                 time.sleep(1.5)
 
@@ -347,10 +376,10 @@ class StarkIAApp(ctk.CTk):
                         inputCargo.dispatchEvent(new Event('change', {{ bubbles: true }}));
                     }}
                 """
-                self.navegador.execute_script(script_cargo)
+                navegador.execute_script(script_cargo)
                 time.sleep(0.8)
 
-                self.navegador.execute_script("""
+                navegador.execute_script("""
                     let form = document.querySelector("form");
                     if (form) {
                         let submitBtn = form.querySelector("button[type='submit']") || form.querySelector("button");
@@ -368,13 +397,18 @@ class StarkIAApp(ctk.CTk):
                 self.adicionar_balao_mensagem(f"Prontinho! Encontrei ótimas vagas para '{cargo.title()}' e já deixei a busca aberta na sua tela.", is_user=False)
 
         except Exception:
+            # Mostra o erro real no terminal para facilitar o diagnóstico
+            traceback.print_exc()
             balao_loading.destroy()
             self.adicionar_balao_mensagem("Tive uma pequena instabilidade ao abrir as vagas, mas já estou ajustando para você.", is_user=False)
+            # Descarta o Chrome com problema; a próxima busca abre um novo
+            self.fechar_navegador()
             try:
                 cargo_enc = urllib.parse.quote(cargo)
-                self.navegador.get(f"https://www.catho.com.br/vagas/{cargo_enc}/")
+                self.obter_navegador().get(f"https://www.catho.com.br/vagas/{cargo_enc}/")
             except Exception:
-                self.navegador = None
+                traceback.print_exc()
+                self.fechar_navegador()
 
     def aceitar_cookies(self):
         if not self.navegador:
